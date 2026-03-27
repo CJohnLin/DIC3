@@ -29,7 +29,7 @@ def simulate():
     est_C = float(np.mean(rewards_C))
     
     estimates = {'A': est_A, 'B': est_B, 'C': est_C}
-    winner = max(estimates, key=estimates.get)
+    winner = max(estimates.keys(), key=lambda k: estimates[k])
     
     remaining_budget = total_budget - (pulls_per_arm * 3)
     expected_explore_reward = pulls_per_arm * means['A'] + pulls_per_arm * means['B'] + pulls_per_arm * means['C']
@@ -64,6 +64,22 @@ def simulate():
     for idx in indices:
         avg_returns.append(float(cumulative_rewards[idx-1] / idx))
         
+    # --- New: Convergence of each bandit independently for 3333 pulls ---
+    convergence_pulls = total_budget // 3
+    conv_A = np.cumsum(np.random.binomial(1, means['A'], convergence_pulls)) / np.arange(1, convergence_pulls + 1)
+    conv_B = np.cumsum(np.random.binomial(1, means['B'], convergence_pulls)) / np.arange(1, convergence_pulls + 1)
+    conv_C = np.cumsum(np.random.binomial(1, means['C'], convergence_pulls)) / np.arange(1, convergence_pulls + 1)
+    
+    c_step = max(1, convergence_pulls // 150)
+    c_indices = list(range(1, convergence_pulls + 1, c_step))
+    if convergence_pulls not in c_indices:
+        c_indices.append(convergence_pulls)
+    
+    cv_A = [float(conv_A[i-1]) for i in c_indices]
+    cv_B = [float(conv_B[i-1]) for i in c_indices]
+    cv_C = [float(conv_C[i-1]) for i in c_indices]
+    # -------------------------------------------------------------------
+
     # Generate answers text
     ans1 = f"Analytical estimation: {pulls_per_arm} pulls each of A, B, and C = {pulls_per_arm * means['A']:.0f} + {pulls_per_arm * means['B']:.0f} + {pulls_per_arm * means['C']:.0f} = {expected_explore_reward:.0f}."
     ans2 = f"Simulation results: Estimated mean for A = {est_A:.3f}, B = {est_B:.3f}, C = {est_C:.3f}. Bandit {winner} is selected for exploitation."
@@ -78,6 +94,10 @@ def simulate():
         'est_means': [est_A, est_B, est_C],
         'chart_x': indices,
         'chart_y': avg_returns,
+        'conv_x': c_indices,
+        'conv_A': cv_A,
+        'conv_B': cv_B,
+        'conv_C': cv_C,
         'winner': winner,
         'optimal_mean': max(means.values()),
         'explore_budget': explore_budget

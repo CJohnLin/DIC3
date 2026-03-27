@@ -228,9 +228,15 @@
             <button class="btn-run" onclick="runSimulation()">Run Simulation ✨</button>
         </div>
 
-        <!-- Dashboard Panel -->
         <div class="dashboard" id="dash">
             
+            <div class="glass-panel">
+                <h2 style="border: none; text-align: center;">A/B Test Simulation: Average Return vs Dollars Spent (Convergence)</h2>
+                <div class="chart-container">
+                    <canvas id="convChart"></canvas>
+                </div>
+            </div>
+
             <div class="glass-panel">
                 <h2 style="border: none; text-align: center;">Cumulative Average Return over Time</h2>
                 <div class="chart-container">
@@ -301,9 +307,29 @@
         Chart.defaults.color = '#dcdde1';
         Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
         
-        let lineChart, barChart;
+        let lineChart, barChart, convChart;
 
         function initCharts() {
+            const ctxConv = document.getElementById('convChart').getContext('2d');
+            convChart = new Chart(ctxConv, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    animation: { duration: 1000, easing: 'easeOutQuart' },
+                    interaction: { mode: 'index', intersect: false },
+                    elements: { point: { radius: 0, hitRadius: 10 }, line: { tension: 0.1, borderWidth: 2 } },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } },
+                        tooltip: { backgroundColor: 'rgba(15, 12, 41, 0.9)', titleFont: {size: 14}, padding: 12, cornerRadius: 8 }
+                    },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, title: {display: true, text: 'Dollars Spent per Bandit'} },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: {display: true, text: 'Average Return'} }
+                    }
+                }
+            });
+
             const ctxLine = document.getElementById('lineChart').getContext('2d');
             lineChart = new Chart(ctxLine, {
                 type: 'line',
@@ -420,6 +446,30 @@
                     }
                 ];
                 barChart.update();
+
+                // Update Convergence Chart
+                convChart.data.labels = data.conv_x;
+                convChart.data.datasets = [
+                    {
+                        label: 'Bandit A',
+                        data: data.conv_A,
+                        borderColor: '#74b9ff',
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Bandit B',
+                        data: data.conv_B,
+                        borderColor: '#fd79a8',
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Bandit C',
+                        data: data.conv_C,
+                        borderColor: '#55efc4',
+                        borderWidth: 2
+                    }
+                ];
+                convChart.update();
 
             } catch (err) {
                 console.error(err);
