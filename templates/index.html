@@ -4,69 +4,436 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DIC3: MAB Explore vs Exploit</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; line-height: 1.6; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 30px;}
-        h2 { color: #2980b9; margin-top: 30px;}
-        .task-card { background: #ecf0f1; padding: 20px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid #3498db; }
-        .task-header { font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #34495e;}
-        .plot-container { text-align: center; margin: 40px 0; }
-        .plot-container img { max-width: 100%; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .footer { text-align: center; margin-top: 50px; color: #7f8c8d; font-size: 0.9em; }
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #00cec9;
+            --bg-grad-1: #0f0c29;
+            --bg-grad-2: #302b63;
+            --bg-grad-3: #24243e;
+            --surface: rgba(255, 255, 255, 0.05);
+            --surface-hover: rgba(255, 255, 255, 0.1);
+            --border: rgba(255, 255, 255, 0.1);
+            --text-main: #f5f6fa;
+            --text-muted: #dcdde1;
+            --chart-a: #74b9ff;
+            --chart-b: #fd79a8;
+        }
+        body { 
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
+            background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-3));
+            background-attachment: fixed;
+            color: var(--text-main); 
+            line-height: 1.6; 
+            padding: 30px 20px; 
+            margin: 0;
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1300px; 
+            margin: auto; 
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 30px;
+        }
+        @media (max-width: 1000px) {
+            .container { grid-template-columns: 1fr; }
+        }
+        .glass-panel {
+            background: var(--surface);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            height: fit-content;
+        }
+        h1 { 
+            grid-column: 1 / -1;
+            text-align: center; 
+            font-size: 2.5rem;
+            background: linear-gradient(to right, var(--secondary), #74b9ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 0;
+            margin-bottom: 30px;
+            letter-spacing: -0.5px;
+        }
+        h2 { 
+            color: var(--secondary); 
+            font-size: 1.3rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+        
+        /* Controls */
+        .control-group { margin-bottom: 20px; }
+        .control-group label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+        .val-display { 
+            color: #fff; 
+            font-weight: 700; 
+            font-family: monospace;
+            background: rgba(0,0,0,0.4); 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-size: 0.9rem;
+        }
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--secondary);
+            cursor: pointer;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--secondary);
+            border-radius: 50%;
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        
+        .btn-run {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0,206,201,0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-run:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,206,201,0.5);
+        }
+        .btn-run:active { transform: translateY(0); }
+
+        /* Dashboard */
+        .dashboard { display: flex; flex-direction: column; gap: 30px; }
+        
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        /* Answers grid */
+        .answers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        .task-card { 
+            background: rgba(0,0,0,0.25); 
+            padding: 20px 25px; 
+            border-radius: 12px; 
+            border-left: 4px solid var(--secondary); 
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .task-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+        .task-card:hover::before { transform: translateX(100%); }
+        .task-card:hover {
+            background: rgba(0,0,0,0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .task-header { 
+            font-weight: 600; 
+            font-size: 0.95rem; 
+            margin-bottom: 12px; 
+            color: #74b9ff;
+            line-height: 1.4;
+        }
+        .task-ans { 
+            font-size: 0.95rem; 
+            color: var(--text-main); 
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        
+        .loading { opacity: 0.5; pointer-events: none; }
+        .footer { grid-column: 1 / -1; text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 20px; opacity: 0.6;}
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Explore-then-Exploit Bandit Simulation (A/B Testing)</h1>
+        <h1>Explore-then-Exploit Simulation</h1>
         
-        <h2>Task Responses</h2>
-        
-        <div class="task-card">
-            <div class="task-header">1. Simulate or analytically estimate the expected reward from the A/B test phase:</div>
-            <div>{{ ans1 }}</div>
+        <!-- Controls Panel -->
+        <div class="glass-panel" id="controls">
+            <h2>Simulation Parameters</h2>
+            
+            <div class="control-group">
+                <label>Bandit A Mean <span class="val-display" id="valA">0.80</span></label>
+                <input type="range" id="meanA" min="0" max="1" step="0.01" value="0.8">
+            </div>
+            <div class="control-group">
+                <label>Bandit B Mean <span class="val-display" id="valB">0.70</span></label>
+                <input type="range" id="meanB" min="0" max="1" step="0.01" value="0.7">
+            </div>
+            <div class="control-group">
+                <label>Bandit C Mean <span class="val-display" id="valC">0.50</span></label>
+                <input type="range" id="meanC" min="0" max="1" step="0.01" value="0.5">
+            </div>
+            
+            <hr style="border-color: var(--border); margin: 30px 0;">
+
+            <div class="control-group">
+                <label>Explore Budget (A/B Test) <span class="val-display" id="valExplore">2000</span></label>
+                <input type="range" id="exploreBudget" min="100" max="20000" step="100" value="2000">
+            </div>
+            <div class="control-group">
+                <label>Total Budget <span class="val-display" id="valTotal">10000</span></label>
+                <input type="range" id="totalBudget" min="1000" max="50000" step="1000" value="10000">
+            </div>
+            
+            <button class="btn-run" onclick="runSimulation()">Run Simulation ✨</button>
         </div>
 
-        <div class="task-card">
-            <div class="task-header">2. Based on the A/B test results, determine which bandit would likely be selected for exploitation:</div>
-            <div>{{ ans2 }}</div>
-        </div>
+        <!-- Dashboard Panel -->
+        <div class="dashboard" id="dash">
+            
+            <div class="glass-panel">
+                <h2 style="border: none; text-align: center;">Cumulative Average Return over Time</h2>
+                <div class="chart-container">
+                    <canvas id="lineChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="glass-panel">
+                <h2 style="border: none; text-align: center;">True vs. Estimated Bandit Means</h2>
+                <div class="chart-container">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
 
-        <div class="task-card">
-            <div class="task-header">3. Allocate remaining $8,000 using pure exploitation and compute total expected reward:</div>
-            <div>{{ ans3 }}</div>
-        </div>
-
-        <div class="task-card">
-            <div class="task-header">4. Compare this result with the optimal strategy:</div>
-            <div>{{ ans4 }}</div>
-        </div>
-
-        <div class="task-card">
-            <div class="task-header">5. Compute the regret of the A/B testing approach:</div>
-            <div>{{ ans5 }}</div>
-        </div>
-
-        <div class="task-card">
-            <div class="task-header">6. Explain how a bandit algorithm out-performs this A/B strategy:</div>
-            <div>{{ ans6 }}</div>
-        </div>
-
-        <h2>Simulation Plots</h2>
-        
-        <div class="plot-container">
-            <h3>Cumulative Average Return vs. Dollars Spent</h3>
-            <img src="data:image/png;base64,{{ plot1 }}" alt="Cumulative Average Return Plot">
-        </div>
-
-        <div class="plot-container">
-            <h3>True vs. Estimated Bandit Means</h3>
-            <img src="data:image/png;base64,{{ plot2 }}" alt="True vs Estimated Means Plot">
+            <div class="glass-panel">
+                <h2>Analytical Results & Insights</h2>
+                <div class="answers-grid">
+                    <div class="task-card">
+                        <div class="task-header">1. Expected reward from A/B test phase:</div>
+                        <div class="task-ans" id="ans1">Loading...</div>
+                    </div>
+                    <div class="task-card">
+                        <div class="task-header">2. A/B test results & Bandit selection:</div>
+                        <div class="task-ans" id="ans2">Loading...</div>
+                    </div>
+                    <div class="task-card">
+                        <div class="task-header">3. Remaining budget exploitation:</div>
+                        <div class="task-ans" id="ans3">Loading...</div>
+                    </div>
+                    <div class="task-card">
+                        <div class="task-header">4. Optimal strategy comparison:</div>
+                        <div class="task-ans" id="ans4">Loading...</div>
+                    </div>
+                    <div class="task-card">
+                        <div class="task-header">5. Regret of A/B testing approach:</div>
+                        <div class="task-ans" id="ans5">Loading...</div>
+                    </div>
+                    <div class="task-card">
+                        <div class="task-header">6. Bandit algorithm vs rigid A/B testing:</div>
+                        <div class="task-ans" id="ans6">Loading...</div>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div class="footer">
-            DIC3 Assignment &bull; Built with Flask & Matplotlib
+            DIC3 Assignment &bull; Completely Redesigned with Flask REST API & Chart.js
         </div>
     </div>
+
+    <script>
+        // Range slider value display bindings
+        const ID_MAP = {
+            'meanA': 'valA', 'meanB': 'valB', 'meanC': 'valC', 
+            'exploreBudget': 'valExplore', 'totalBudget': 'valTotal'
+        };
+        
+        Object.keys(ID_MAP).forEach(id => {
+            const el = document.getElementById(id);
+            const display = document.getElementById(ID_MAP[id]);
+            el.addEventListener('input', e => {
+                let v = Number(e.target.value);
+                display.innerText = (e.target.step && e.target.step.includes('.')) ? v.toFixed(2) : v;
+            });
+        });
+
+        // Initialize Charts
+        Chart.defaults.color = '#dcdde1';
+        Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+        
+        let lineChart, barChart;
+
+        function initCharts() {
+            const ctxLine = document.getElementById('lineChart').getContext('2d');
+            lineChart = new Chart(ctxLine, {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    animation: { duration: 1000, easing: 'easeOutQuart' },
+                    interaction: { mode: 'index', intersect: false },
+                    elements: { point: { radius: 0, hitRadius: 10 }, line: { tension: 0.3, borderWidth: 3 } },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } },
+                        tooltip: { backgroundColor: 'rgba(15, 12, 41, 0.9)', titleFont: {size: 14}, padding: 12, cornerRadius: 8 }
+                    },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, title: {display: true, text: 'Dollars Spent (Pulls)'} },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: {display: true, text: 'Average Return'} }
+                    }
+                }
+            });
+
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            barChart = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Bandit A', 'Bandit B', 'Bandit C'],
+                    datasets: []
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    animation: { duration: 1000, easing: 'easeOutBounce' },
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } },
+                        tooltip: { backgroundColor: 'rgba(15, 12, 41, 0.9)' }
+                    },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, max: 1.0, beginAtZero: true, title: {display: true, text: 'Mean Reward'} },
+                        x: { grid: {display: false} }
+                    }
+                }
+            });
+        }
+
+        async function runSimulation() {
+            const btn = document.querySelector('.btn-run');
+            const dash = document.getElementById('dash');
+            
+            btn.innerText = "Simulating... ⏳";
+            dash.classList.add('loading');
+            
+            const payload = {
+                mean_A: document.getElementById('meanA').value,
+                mean_B: document.getElementById('meanB').value,
+                mean_C: document.getElementById('meanC').value,
+                explore_budget: document.getElementById('exploreBudget').value,
+                total_budget: document.getElementById('totalBudget').value
+            };
+
+            try {
+                const res = await fetch('/api/simulate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                // 1) Update Text
+                for(let i=1; i<=6; i++) {
+                    const el = document.getElementById('ans'+i);
+                    // Minimal fade effect
+                    el.style.opacity = 0;
+                    setTimeout(() => {
+                        el.innerHTML = data['ans'+i];
+                        el.style.opacity = 1;
+                    }, 200);
+                }
+
+                // 2) Update Line Chart
+                // Ensure array lengths match
+                let optData = Array(data.chart_x.length).fill(data.optimal_mean);
+                
+                lineChart.data.labels = data.chart_x;
+                lineChart.data.datasets = [
+                    {
+                        label: 'Average Return',
+                        data: data.chart_y,
+                        borderColor: '#00cec9',
+                        backgroundColor: 'rgba(0, 206, 201, 0.1)',
+                        fill: true
+                    },
+                    {
+                        label: 'Optimal Option (' + payload['mean_' + Object.keys(payload).reduce((a, b) => payload['mean_'+a] > payload['mean_'+b] ? a : b, 'A').replace('mean_', '')] + ')',
+                        data: optData,
+                        borderColor: '#ff7675',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        pointStyle: 'dash'
+                    }
+                ];
+                lineChart.update();
+
+                // 3) Update Bar Chart
+                barChart.data.datasets = [
+                    {
+                        label: 'True Mean',
+                        data: data.true_means,
+                        backgroundColor: '#74b9ff',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Estimated Mean (after A/B)',
+                        data: data.est_means,
+                        backgroundColor: '#fd79a8',
+                        borderRadius: 6
+                    }
+                ];
+                barChart.update();
+
+            } catch (err) {
+                console.error(err);
+                alert('Simulation failed. Check console.');
+            } finally {
+                btn.innerText = "Run Simulation ✨";
+                dash.classList.remove('loading');
+            }
+        }
+
+        window.onload = () => {
+            initCharts();
+            runSimulation();
+        }
+    </script>
 </body>
 </html>
