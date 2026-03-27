@@ -17,29 +17,33 @@ def simulate():
     total_budget = int(data.get('total_budget', 10000))
     
     means = {'A': mean_A, 'B': mean_B, 'C': mean_C}
-    pulls_per_arm = explore_budget // 2
+    pulls_per_arm = explore_budget // 3
     
-    # Exploration phase (A/B testing)
+    # Exploration phase (A/B/C testing)
     rewards_A = np.random.binomial(1, means['A'], pulls_per_arm)
     rewards_B = np.random.binomial(1, means['B'], pulls_per_arm)
+    rewards_C = np.random.binomial(1, means['C'], pulls_per_arm)
     
     est_A = float(np.mean(rewards_A))
     est_B = float(np.mean(rewards_B))
+    est_C = float(np.mean(rewards_C))
     
-    winner = 'A' if est_A > est_B else 'B'
+    estimates = {'A': est_A, 'B': est_B, 'C': est_C}
+    winner = max(estimates, key=estimates.get)
     
-    remaining_budget = total_budget - explore_budget
-    expected_explore_reward = pulls_per_arm * means['A'] + pulls_per_arm * means['B']
+    remaining_budget = total_budget - (pulls_per_arm * 3)
+    expected_explore_reward = pulls_per_arm * means['A'] + pulls_per_arm * means['B'] + pulls_per_arm * means['C']
     expected_exploit_reward = remaining_budget * means[winner]
     total_expected_reward = expected_explore_reward + expected_exploit_reward
     optimal_reward = total_budget * max(means.values())
     regret = optimal_reward - total_expected_reward
     
     all_rewards = []
-    # Interleave parallel A/B
+    # Interleave parallel exploration
     for i in range(pulls_per_arm):
         all_rewards.append(int(rewards_A[i]))
         all_rewards.append(int(rewards_B[i]))
+        all_rewards.append(int(rewards_C[i]))
         
     # Exploit phase
     if remaining_budget > 0:
@@ -51,8 +55,9 @@ def simulate():
     # Subsample data points for smooth and performant charting in JS
     step = max(1, total_budget // 200)
     indices = list(range(1, len(cumulative_rewards) + 1, step))
-    if explore_budget not in indices and explore_budget <= len(cumulative_rewards):
-        indices.append(explore_budget)
+    explore_len = pulls_per_arm * 3
+    if explore_len not in indices and explore_len <= len(cumulative_rewards):
+        indices.append(explore_len)
     indices.sort()
     
     avg_returns = []
@@ -60,17 +65,17 @@ def simulate():
         avg_returns.append(float(cumulative_rewards[idx-1] / idx))
         
     # Generate answers text
-    ans1 = f"Analytical estimation: {pulls_per_arm} pulls of A (mean {means['A']:.2f}) + {pulls_per_arm} pulls of B (mean {means['B']:.2f}) = {pulls_per_arm * means['A']:.0f} + {pulls_per_arm * means['B']:.0f} = {expected_explore_reward:.0f}."
-    ans2 = f"Simulation results: Estimated mean for A = {est_A:.3f}, B = {est_B:.3f}. Bandit {winner} is selected for exploitation."
+    ans1 = f"Analytical estimation: {pulls_per_arm} pulls each of A, B, and C = {pulls_per_arm * means['A']:.0f} + {pulls_per_arm * means['B']:.0f} + {pulls_per_arm * means['C']:.0f} = {expected_explore_reward:.0f}."
+    ans2 = f"Simulation results: Estimated mean for A = {est_A:.3f}, B = {est_B:.3f}, C = {est_C:.3f}. Bandit {winner} is selected for exploitation."
     ans3 = f"Allocating remaining ${remaining_budget} to Bandit {winner}. Expected reward = {remaining_budget} * {means[winner]:.1f} = {expected_exploit_reward:.0f}. Total = {expected_explore_reward:.0f} + {expected_exploit_reward:.0f} = {total_expected_reward:.0f}."
     ans4 = f"Optimal strategy is to pull the best bandit {total_budget} times. Optimal reward = {total_budget} * {max(means.values()):.2f} = {optimal_reward:.0f}."
     ans5 = f"Regret = Optimal Reward - Total Expected Reward = {optimal_reward:.0f} - {total_expected_reward:.0f} = {regret:.0f}."
-    ans6 = f"Bandit algorithms dynamically adapt, avoiding spending exactly {pulls_per_arm} on suboptimal arms and would even test Bandit C briefly, yielding lower regret compared to this rigid A/B test."
+    ans6 = f"Bandit algorithms (like UCB or Thompson Sampling) dynamically adapt during exploration. Instead of a rigid A/B/C test that wastes {pulls_per_arm} pulls on the worst option, they constantly shift focus to the most promising arm, leading to much lower regret."
 
     return jsonify({
         'ans1': ans1, 'ans2': ans2, 'ans3': ans3, 'ans4': ans4, 'ans5': ans5, 'ans6': ans6,
         'true_means': [means['A'], means['B'], means['C']],
-        'est_means': [est_A, est_B, 0.0], # C is unused in A/B test
+        'est_means': [est_A, est_B, est_C],
         'chart_x': indices,
         'chart_y': avg_returns,
         'winner': winner,
