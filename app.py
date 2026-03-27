@@ -6,6 +6,21 @@ import matplotlib.pyplot as plt
 import io
 import base64
 
+# -- Patch for Python 3.14 + old matplotlib --
+import copy
+import matplotlib.path as mpath
+def _patched_deepcopy(self, memo=None):
+    if self.readonly:
+        return self
+    vertices = copy.deepcopy(self.vertices, memo) if self.vertices is not None else None
+    codes = copy.deepcopy(self.codes, memo) if self.codes is not None else None
+    return type(self)(vertices, codes, _interpolation_steps=self._interpolation_steps, closed=self.should_simplify, readonly=self.readonly)
+try:
+    mpath.Path.__deepcopy__ = _patched_deepcopy
+except Exception:
+    pass
+# -------------------------------------------
+
 app = Flask(__name__)
 
 @app.route('/')
