@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIC3: MAB Explore vs Exploit</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; line-height: 1.6; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 30px;}
+        h2 { color: #2980b9; margin-top: 30px;}
+        .task-card { background: #ecf0f1; padding: 20px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid #3498db; }
+        .task-header { font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #34495e;}
+        .plot-container { text-align: center; margin: 40px 0; }
+        .plot-container img { max-width: 100%; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .footer { text-align: center; margin-top: 50px; color: #7f8c8d; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Explore-then-Exploit Bandit Simulation (A/B Testing)</h1>
+        
+        <h2>Task Responses</h2>
+        
+        <div class="task-card">
+            <div class="task-header">1. Simulate or analytically estimate the expected reward from the A/B test phase:</div>
+            <div>{{ ans1 }}</div>
+        </div>
+
+        <div class="task-card">
+            <div class="task-header">2. Based on the A/B test results, determine which bandit would likely be selected for exploitation:</div>
+            <div>{{ ans2 }}</div>
+        </div>
+
+        <div class="task-card">
+            <div class="task-header">3. Allocate remaining $8,000 using pure exploitation and compute total expected reward:</div>
+            <div>{{ ans3 }}</div>
+        </div>
+
+        <div class="task-card">
+            <div class="task-header">4. Compare this result with the optimal strategy:</div>
+            <div>{{ ans4 }}</div>
+        </div>
+
+        <div class="task-card">
+            <div class="task-header">5. Compute the regret of the A/B testing approach:</div>
+            <div>{{ ans5 }}</div>
+        </div>
+
+        <div class="task-card">
+            <div class="task-header">6. Explain how a bandit algorithm out-performs this A/B strategy:</div>
+            <div>{{ ans6 }}</div>
+        </div>
+
+        <h2>Simulation Plots</h2>
+        
+        <div class="plot-container">
+            <h3>Cumulative Average Return vs. Dollars Spent</h3>
+            <img src="data:image/png;base64,{{ plot1 }}" alt="Cumulative Average Return Plot">
+        </div>
+
+        <div class="plot-container">
+            <h3>True vs. Estimated Bandit Means</h3>
+            <img src="data:image/png;base64,{{ plot2 }}" alt="True vs Estimated Means Plot">
+        </div>
+        
+        <div class="footer">
+            DIC3 Assignment &bull; Built with Flask & Matplotlib
+        </div>
+    </div>
+</body>
+</html>
