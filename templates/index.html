@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DIC3: MAB Explore vs Exploit</title>
+    <title>DIC3: MAB 探索與利用分析</title>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -22,7 +22,7 @@
             --chart-b: #fd79a8;
         }
         body { 
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
+            font-family: 'Inter', 'Segoe UI', 'Microsoft JhengHei', system-ui, sans-serif; 
             background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-3));
             background-attachment: fixed;
             color: var(--text-main); 
@@ -56,8 +56,9 @@
             text-align: center; 
             font-size: 2.5rem;
             background: linear-gradient(to right, var(--secondary), #74b9ff);
+            background-clip: text;
             -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: transparent;
             margin-top: 0;
             margin-bottom: 30px;
             letter-spacing: -0.5px;
@@ -99,9 +100,11 @@
             background: rgba(255,255,255,0.1);
             border-radius: 4px;
             outline: none;
+            appearance: none;
             -webkit-appearance: none;
         }
         input[type=range]::-webkit-slider-thumb {
+            appearance: none;
             -webkit-appearance: none;
             width: 18px;
             height: 18px;
@@ -195,88 +198,89 @@
 </head>
 <body>
     <div class="container">
-        <h1>Explore-then-Exploit Simulation</h1>
+        <h1>多臂老虎機 (Explore-then-Exploit) 總合分析面板</h1>
         
         <!-- Controls Panel -->
         <div class="glass-panel" id="controls">
-            <h2>Simulation Parameters</h2>
+            <h2>模擬參數設定</h2>
             
             <div class="control-group">
-                <label>Bandit A Mean <span class="val-display" id="valA">0.80</span></label>
+                <label>老虎機 A 期望勝率 <span class="val-display" id="valA">0.80</span></label>
                 <input type="range" id="meanA" min="0" max="1" step="0.01" value="0.8">
             </div>
             <div class="control-group">
-                <label>Bandit B Mean <span class="val-display" id="valB">0.70</span></label>
+                <label>老虎機 B 期望勝率 <span class="val-display" id="valB">0.70</span></label>
                 <input type="range" id="meanB" min="0" max="1" step="0.01" value="0.7">
             </div>
             <div class="control-group">
-                <label>Bandit C Mean <span class="val-display" id="valC">0.50</span></label>
+                <label>老虎機 C 期望勝率 <span class="val-display" id="valC">0.50</span></label>
                 <input type="range" id="meanC" min="0" max="1" step="0.01" value="0.5">
             </div>
             
             <hr style="border-color: var(--border); margin: 30px 0;">
 
             <div class="control-group">
-                <label>Explore Budget (A/B Test) <span class="val-display" id="valExplore">2000</span></label>
+                <label>探索期預算 (A/B/C) <span class="val-display" id="valExplore">2000</span></label>
                 <input type="range" id="exploreBudget" min="100" max="20000" step="100" value="2000">
             </div>
             <div class="control-group">
-                <label>Total Budget <span class="val-display" id="valTotal">10000</span></label>
+                <label>系統總拉動預算 <span class="val-display" id="valTotal">10000</span></label>
                 <input type="range" id="totalBudget" min="1000" max="50000" step="1000" value="10000">
             </div>
             
-            <button class="btn-run" onclick="runSimulation()">Run Simulation ✨</button>
+            <button class="btn-run" onclick="runSimulation()">執行模擬測試 ✨</button>
         </div>
 
+        <!-- Dashboard Panel -->
         <div class="dashboard" id="dash">
             
             <div class="glass-panel">
-                <h2 style="border: none; text-align: center;">A/B Test Simulation: Average Return vs Dollars Spent (Convergence)</h2>
+                <h2 style="border: none; text-align: center;">收斂驗證：拉動次數與平均回報分析 (獨立盲測)</h2>
                 <div class="chart-container">
                     <canvas id="convChart"></canvas>
                 </div>
             </div>
 
             <div class="glass-panel">
-                <h2 style="border: none; text-align: center;">Cumulative Average Return over Time</h2>
+                <h2 style="border: none; text-align: center;">探索與利用：整體累積平均回報變化圖</h2>
                 <div class="chart-container">
                     <canvas id="lineChart"></canvas>
                 </div>
             </div>
             
             <div class="glass-panel">
-                <h2 style="border: none; text-align: center;">True vs. Estimated Bandit Means</h2>
+                <h2 style="border: none; text-align: center;">實際期望勝率 vs 模擬預估勝率 對比</h2>
                 <div class="chart-container">
                     <canvas id="barChart"></canvas>
                 </div>
             </div>
 
             <div class="glass-panel">
-                <h2>Analytical Results & Insights</h2>
+                <h2>數據分析與作業解答區</h2>
                 <div class="answers-grid">
                     <div class="task-card">
-                        <div class="task-header">1. Expected reward from A/B test phase:</div>
-                        <div class="task-ans" id="ans1">Loading...</div>
+                        <div class="task-header">1. 探索期測試階段的理論預期獎勵：</div>
+                        <div class="task-ans" id="ans1">載入中...</div>
                     </div>
                     <div class="task-card">
-                        <div class="task-header">2. A/B test results & Bandit selection:</div>
-                        <div class="task-ans" id="ans2">Loading...</div>
+                        <div class="task-header">2. 探索期測試結果與最佳選擇：</div>
+                        <div class="task-ans" id="ans2">載入中...</div>
                     </div>
                     <div class="task-card">
-                        <div class="task-header">3. Remaining budget exploitation:</div>
-                        <div class="task-ans" id="ans3">Loading...</div>
+                        <div class="task-header">3. 剩餘預算的利用階段 (Exploitation)：</div>
+                        <div class="task-ans" id="ans3">載入中...</div>
                     </div>
                     <div class="task-card">
-                        <div class="task-header">4. Optimal strategy comparison:</div>
-                        <div class="task-ans" id="ans4">Loading...</div>
+                        <div class="task-header">4. 理論上最佳完美策略比較：</div>
+                        <div class="task-ans" id="ans4">載入中...</div>
                     </div>
                     <div class="task-card">
-                        <div class="task-header">5. Regret of A/B testing approach:</div>
-                        <div class="task-ans" id="ans5">Loading...</div>
+                        <div class="task-header">5. 此剛性探索策略產生的遺憾值 (Regret)：</div>
+                        <div class="task-ans" id="ans5">載入中...</div>
                     </div>
                     <div class="task-card">
-                        <div class="task-header">6. Bandit algorithm vs rigid A/B testing:</div>
-                        <div class="task-ans" id="ans6">Loading...</div>
+                        <div class="task-header">6. 動態老虎機演算法為何優於固定測試：</div>
+                        <div class="task-ans" id="ans6">載入中...</div>
                     </div>
                 </div>
             </div>
@@ -305,7 +309,7 @@
 
         // Initialize Charts
         Chart.defaults.color = '#dcdde1';
-        Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+        Chart.defaults.font.family = "'Inter', 'Microsoft JhengHei', sans-serif";
         
         let lineChart, barChart, convChart;
 
@@ -324,8 +328,8 @@
                         tooltip: { backgroundColor: 'rgba(15, 12, 41, 0.9)', titleFont: {size: 14}, padding: 12, cornerRadius: 8 }
                     },
                     scales: {
-                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, title: {display: true, text: 'Dollars Spent per Bandit'} },
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: {display: true, text: 'Average Return'} }
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, title: {display: true, text: '各選項被拉動次數 (Pulls)'} },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: {display: true, text: '平均回報率 (Average Return)'} }
                     }
                 }
             });
@@ -344,8 +348,8 @@
                         tooltip: { backgroundColor: 'rgba(15, 12, 41, 0.9)', titleFont: {size: 14}, padding: 12, cornerRadius: 8 }
                     },
                     scales: {
-                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, title: {display: true, text: 'Dollars Spent (Pulls)'} },
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: {display: true, text: 'Average Return'} }
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, title: {display: true, text: '總花費預算 (Total Dollars Spent)'} },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: {display: true, text: '累積平均回報率 (Cumulative Average Return)'} }
                     }
                 }
             });
@@ -354,7 +358,7 @@
             barChart = new Chart(ctxBar, {
                 type: 'bar',
                 data: {
-                    labels: ['Bandit A', 'Bandit B', 'Bandit C'],
+                    labels: ['老虎機 A (Bandit A)', '老虎機 B (Bandit B)', '老虎機 C (Bandit C)'],
                     datasets: []
                 },
                 options: {
@@ -365,7 +369,7 @@
                         tooltip: { backgroundColor: 'rgba(15, 12, 41, 0.9)' }
                     },
                     scales: {
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, max: 1.0, beginAtZero: true, title: {display: true, text: 'Mean Reward'} },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, max: 1.0, beginAtZero: true, title: {display: true, text: '預期勝率 (Mean Reward)'} },
                         x: { grid: {display: false} }
                     }
                 }
@@ -376,7 +380,7 @@
             const btn = document.querySelector('.btn-run');
             const dash = document.getElementById('dash');
             
-            btn.innerText = "Simulating... ⏳";
+            btn.innerText = "模擬並計算中... ⏳";
             dash.classList.add('loading');
             
             const payload = {
@@ -413,14 +417,14 @@
                 lineChart.data.labels = data.chart_x;
                 lineChart.data.datasets = [
                     {
-                        label: 'Average Return',
+                        label: '整體累積平均回報',
                         data: data.chart_y,
                         borderColor: '#00cec9',
                         backgroundColor: 'rgba(0, 206, 201, 0.1)',
                         fill: true
                     },
                     {
-                        label: 'Optimal Option (True Mean)',
+                        label: '若一開始就買最佳選項的理論回報',
                         data: optData,
                         borderColor: '#ff7675',
                         borderDash: [5, 5],
@@ -433,13 +437,13 @@
                 // 3) Update Bar Chart
                 barChart.data.datasets = [
                     {
-                        label: 'True Mean',
+                        label: '系統設定的實際勝率 (True Mean)',
                         data: data.true_means,
                         backgroundColor: '#74b9ff',
                         borderRadius: 6
                     },
                     {
-                        label: 'Estimated Mean (after A/B)',
+                        label: '探索期盲測得出的預估勝率 (Estimated Mean)',
                         data: data.est_means,
                         backgroundColor: '#fd79a8',
                         borderRadius: 6
@@ -447,23 +451,23 @@
                 ];
                 barChart.update();
 
-                // Update Convergence Chart
+                // 4) Update Convergence Chart
                 convChart.data.labels = data.conv_x;
                 convChart.data.datasets = [
                     {
-                        label: 'Bandit A',
+                        label: '老虎機 A 平均回報收斂線',
                         data: data.conv_A,
                         borderColor: '#74b9ff',
                         borderWidth: 2
                     },
                     {
-                        label: 'Bandit B',
+                        label: '老虎機 B 平均回報收斂線',
                         data: data.conv_B,
                         borderColor: '#fd79a8',
                         borderWidth: 2
                     },
                     {
-                        label: 'Bandit C',
+                        label: '老虎機 C 平均回報收斂線',
                         data: data.conv_C,
                         borderColor: '#55efc4',
                         borderWidth: 2
@@ -473,9 +477,9 @@
 
             } catch (err) {
                 console.error(err);
-                alert('Simulation failed. Check console.');
+                alert('模擬伺服器連線失敗。');
             } finally {
-                btn.innerText = "Run Simulation ✨";
+                btn.innerText = "執行模擬測試 ✨";
                 dash.classList.remove('loading');
             }
         }

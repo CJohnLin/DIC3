@@ -80,13 +80,13 @@ def simulate():
     cv_C = [float(conv_C[i-1]) for i in c_indices]
     # -------------------------------------------------------------------
 
-    # Generate answers text
-    ans1 = f"Analytical estimation: {pulls_per_arm} pulls each of A, B, and C = {pulls_per_arm * means['A']:.0f} + {pulls_per_arm * means['B']:.0f} + {pulls_per_arm * means['C']:.0f} = {expected_explore_reward:.0f}."
-    ans2 = f"Simulation results: Estimated mean for A = {est_A:.3f}, B = {est_B:.3f}, C = {est_C:.3f}. Bandit {winner} is selected for exploitation."
-    ans3 = f"Allocating remaining ${remaining_budget} to Bandit {winner}. Expected reward = {remaining_budget} * {means[winner]:.1f} = {expected_exploit_reward:.0f}. Total = {expected_explore_reward:.0f} + {expected_exploit_reward:.0f} = {total_expected_reward:.0f}."
-    ans4 = f"Optimal strategy is to pull the best bandit {total_budget} times. Optimal reward = {total_budget} * {max(means.values()):.2f} = {optimal_reward:.0f}."
-    ans5 = f"Regret = Optimal Reward - Total Expected Reward = {optimal_reward:.0f} - {total_expected_reward:.0f} = {regret:.0f}."
-    ans6 = f"Bandit algorithms (like UCB or Thompson Sampling) dynamically adapt during exploration. Instead of a rigid A/B/C test that wastes {pulls_per_arm} pulls on the worst option, they constantly shift focus to the most promising arm, leading to much lower regret."
+    # Generate answers text (Traditional Chinese)
+    ans1 = f"理論估算：A、B、C 各試拉 {pulls_per_arm} 次 = {pulls_per_arm * means['A']:.0f} + {pulls_per_arm * means['B']:.0f} + {pulls_per_arm * means['C']:.0f} = 第 1 階段預期獎勵 {expected_explore_reward:.0f}。"
+    ans2 = f"模擬結果：預估勝率 A = {est_A:.3f}, B = {est_B:.3f}, C = {est_C:.3f}。因此選擇主要對老虎機 {winner} 進行利用 (Exploitation)。"
+    ans3 = f"將剩餘的 ${remaining_budget} 預算全數投入老虎機 {winner}。第 2 階段預期獎勵 = {remaining_budget} * {means[winner]:.1f} = {expected_exploit_reward:.0f}。總預期獎勵 = {expected_explore_reward:.0f} + {expected_exploit_reward:.0f} = {total_expected_reward:.0f}。"
+    ans4 = f"理論上的最佳完美策略為：將所有 {total_budget} 次預算全部投入最佳的老虎機。最佳預期獎勵 = {total_budget} * {max(means.values()):.2f} = {optimal_reward:.0f}。"
+    ans5 = f"此策略的遺憾值 (Regret) = 最佳預期獎勵 - 總預期獎勵 = {optimal_reward:.0f} - {total_expected_reward:.0f} = {regret:.0f}。"
+    ans6 = f"多臂老虎機演算法 (如 UCB 或 Thompson Sampling) 會在探索時動態調整拉桿比例。相較於硬性盲測的 A/B/C 測試會白白浪費 {pulls_per_arm} 次在最差的選項上，動態演算法能更快將資源集中在勝率最高的老虎機，進而大幅降低系統的遺憾值。"
 
     return jsonify({
         'ans1': ans1, 'ans2': ans2, 'ans3': ans3, 'ans4': ans4, 'ans5': ans5, 'ans6': ans6,
