@@ -394,7 +394,7 @@
                         fill: true
                     },
                     {
-                        label: 'Optimal Option (' + payload['mean_' + Object.keys(payload).reduce((a, b) => payload['mean_'+a] > payload['mean_'+b] ? a : b, 'A').replace('mean_', '')] + ')',
+                        label: 'Optimal Option (True Mean)',
                         data: optData,
                         borderColor: '#ff7675',
                         borderDash: [5, 5],
